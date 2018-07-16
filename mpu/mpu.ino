@@ -6,9 +6,13 @@
 #include <math.h>
 
 const int MPU_addr=0x68;  // I2C address of the MPU-6050
-int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
+int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ,OldGyZ;
 String str = "";
 String str1 = "";
+
+unsigned long lastDebounceTime = 0; 
+unsigned long debounceDelay = 60; 
+unsigned long StrokeCounter = 0;
 
 MPU6050 mpu;
 
@@ -48,10 +52,11 @@ void setup(){
     //Serial.println("Card initialized.");
   File dataFile = SD.open("data.csv", FILE_WRITE);
   if (dataFile) {
-    dataFile.println("Time,X Acc,Y Acc,Z Acc,X Rot,Y Rot,Z Rot");
+    dataFile.println("Time,X Acc,Y Acc,Z Acc,X Rot,Y Rot,Z Rot,Stroke Counter");
     dataFile.close();
     Serial.println(str);
   }
+  OldGyZ = 1;
 }
 double AccMag = 0;
 String TestString = "";
@@ -70,7 +75,23 @@ void loop(){
   GyY=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
   GyZ=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 
-  str =String(millis())+ "," + String(AcX) + ","+ String(AcY) + ","+ String(AcZ) + ","+ String(GyX) + ","+ String(GyY) + ","+ String(GyZ);
+  //Zero Crossing Counter with debounceDelay
+  boolean CrossedZero = false;  
+  if (OldGyZ < 0 && GyZ < 0) || (OldGyZ > 0 && GyZ < 0) {
+       lastDebounceTime = millis();
+       CrossedZero = true;
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (CrossedZero == true){
+          OldGyZ = GyZ;
+          StrokeCounter++;
+      }
+  }
+
+    
+
+  str =String(millis())+ "," + String(AcX) + ","+ String(AcY) + ","+ String(AcZ) + ","+ String(GyX) + ","+ String(GyY) + ","+ String(GyZ)+ ","+ String(StrokeCounter) ;
   
   //AccMag = (sqrt((AcX*AcX) + (AcY*AcY) + (AcZ*AcZ)));
   //str1 = String(AcX) + ","+ String(AcY) + ","+ String(AcZ) + ","+ String(GyX) + ","+ String(GyY) + ","+ String(GyZ);
