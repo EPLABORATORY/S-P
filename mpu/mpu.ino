@@ -77,7 +77,7 @@ void loop(){
 
   //Zero Crossing Counter with debounceDelay
   boolean CrossedZero = false;  
-  if (OldGyZ < 0 && GyZ < 0) || (OldGyZ > 0 && GyZ < 0) {
+  if ((OldGyZ < 0 && GyZ < 0) || (OldGyZ > 0 && GyZ < 0)) {
        lastDebounceTime = millis();
        CrossedZero = true;
   }
