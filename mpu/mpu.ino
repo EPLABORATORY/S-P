@@ -86,7 +86,6 @@ void InitialiseSD() {
   }
 }
 
-
 void ReadMPU() {
   Wire.beginTransmission(MPU_addr);
   Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
@@ -103,7 +102,8 @@ void ReadMPU() {
 
 void ReadForce() {
   int sensorValue = analogRead(A7);
-  double forceVAL = mapf(sensorValue, 0, 1023, 0, 450);
+  double forceVAL = mapf((double)sensorValue, 0, 1023, 0, 450);  
+  
   if (forceVAL > 10) {
     forceSUM += forceVAL;
     forceCOUNT ++;
@@ -185,14 +185,6 @@ void ProcessTimers() {
   t = millis();
 }
 
-void setup() {
-  InitialiseMPU();
-  InitialiseSD();
-  OldGyZ = -3000;
-  t = 0;
-  tempCounter = 0;
-}
-
 void ReadSerialCommands() {
   while (Serial.available()) {
     String Command;
@@ -209,10 +201,19 @@ void ReadSerialCommands() {
   }
 }
 
+
+void setup() {
+  InitialiseMPU();
+  InitialiseSD();
+  OldGyZ = -3000;
+  t = 0;
+  tempCounter = 0;
+}
+
 void loop() {
   ReadMPU();
   ReadForce();
-  ReadSerialCommands();
+  //ReadSerialCommands();
   ProcessTimers();
   ProcessStrokes();
   LogToSD();
